@@ -292,7 +292,11 @@ def main(
         and model_recipe_name == "nemotron_3_super"
         and compute_dtype == "bf16"
         and gpu == "b300"
-    ) or (model_family_name == "deepseek" and model_recipe_name == "deepseek_v3" and gpu == "b300"):
+    ) or (
+        model_family_name == "deepseek" and model_recipe_name == "deepseek_v3" and gpu == "b300"
+    ) or (
+        model_family_name == "llama" and task == "pretrain" and gpu == "b300"
+    ):
         enable_pct_binding = False
 
     if wandb_key is not None:
