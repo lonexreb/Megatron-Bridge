@@ -154,7 +154,7 @@ def llama31_405b_pretrain_config_b300(
     base_cfg = get_workload_base_config(
         model_family_name="llama",
         model_recipe_name="llama31_405b",
-        gpu="gb300",
+        gpu="b300",
         compute_dtype=precision.upper(),
         task="pretrain",
         config_variant=config_variant,
@@ -184,7 +184,7 @@ def llama31_405b_pretrain_config_b200(
     base_cfg = get_workload_base_config(
         model_family_name="llama",
         model_recipe_name="llama31_405b",
-        gpu="gb200",
+        gpu="b200",
         compute_dtype=precision.upper(),
         task="pretrain",
         config_variant=config_variant,
