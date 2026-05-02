@@ -21,6 +21,9 @@ without requiring the full 26B-A4B weights.
 ``interleaved_attn_pattern=(1, 1)`` ensures both a sliding-window layer (layer 1)
 and a global-attention layer (layer 2) are included in the 2-layer run, so the
 K=V tying path in Gemma4SelfAttention is exercised.
+
+Tests are skipped gracefully when ``google/gemma-4-26B-A4B-it`` is not cached
+in the CI environment (``HF_HUB_OFFLINE=1`` and no local copy).
 """
 
 import pytest
@@ -30,6 +33,17 @@ from megatron.bridge.recipes.gemma4_vl.gemma4_vl import (
     gemma4_vl_26b_sft_config,
 )
 from tests.functional_tests.test_groups.recipes.utils import run_pretrain_vl_recipe_test
+
+
+def _skip_if_model_unavailable(config_func):
+    """Call config_func and skip the test if the HF model config is not available (e.g. offline CI)."""
+    try:
+        return config_func()
+    except (ValueError, OSError) as e:
+        err = str(e).lower()
+        if "couldn't connect" in err or "cached files" in err or "failed to load configuration" in err:
+            pytest.skip(f"Model config not available (offline?): {e}")
+        raise
 
 
 # Shared model overrides: trim the 26B-A4B architecture down to fit on 2 GPUs.
@@ -71,10 +85,12 @@ class TestGemma4VLRecipes:
     @pytest.mark.parametrize("config_func,recipe_name,model_overrides", GEMMA4_VL_FINETUNE_RECIPES)
     def test_gemma4_vl_sft_recipes(self, config_func, recipe_name, model_overrides, tmp_path):
         """Smoke test for Gemma4 VL SFT recipe: 2 layers, 4 experts, sliding+global attention."""
+        _skip_if_model_unavailable(config_func)
         run_pretrain_vl_recipe_test(config_func, recipe_name, tmp_path, model_overrides=model_overrides)
 
     @pytest.mark.run_only_on("GPU")
     @pytest.mark.parametrize("config_func,recipe_name,model_overrides", GEMMA4_VL_PEFT_RECIPES)
     def test_gemma4_vl_peft_recipes(self, config_func, recipe_name, model_overrides, tmp_path):
         """Smoke test for Gemma4 VL PEFT (LoRA) recipe: exercises adapter export with K=V tying."""
+        _skip_if_model_unavailable(config_func)
         run_pretrain_vl_recipe_test(config_func, recipe_name, tmp_path, model_overrides=model_overrides)
